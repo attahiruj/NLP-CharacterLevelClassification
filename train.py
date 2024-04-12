@@ -189,10 +189,11 @@ def time_since(since):
 rnn = RNN(n_letters, n_hidden, n_categories)
 
 print_model_summary = train_config['train_config']['print_model_summary']
-if print_model_summary: print(summary(rnn))
+if print_model_summary: 
+    print(summary(rnn))
 
 start = time.time()
-print('\n{:<6s} | {:<10s} | {:<6s} | {:<15s} | {:<12s} {:<12s}'.format(" Progress", "Time", "Loss", "Name", "Guess", "Correct"))
+print('\n{:<12s} | {:<10s} | {:<6s} | {:<15s} | {:<12s} {:<12s}'.format(" Progress", "Time", "Loss", "Name", "Guess", "Correct"))
 print('-' * 70)
 for iter in range(1, n_iters+1):
 	category, word, category_tensor, word_tensor = random_training_example()
@@ -205,7 +206,7 @@ for iter in range(1, n_iters+1):
 		correct = '✓' if guess == category else '✗ (%s)' % category
 		# print('%d %d%% \t| %s | %.4f | %s \t| %s %s' % (iter, iter / n_iters * 100, time_since(start), loss, word, guess, correct))
 		
-		print('{:<4d} {:<3.0f}% | {:<10s} | {:.4f} | {:<15s} | {:<12s} {:<12s}'.format(iter, iter / n_iters * 100, time_since(start), loss, word, guess, correct))
+		print('{:<6d} {:<4.0f}% | {:<10s} | {:.4f} | {:<15s} | {:<12s} {:<12s}'.format(iter, iter / n_iters * 100, time_since(start), loss, word, guess, correct))
 
 
 	# Add current loss avg to list of losses

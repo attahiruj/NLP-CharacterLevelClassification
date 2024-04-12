@@ -114,4 +114,3 @@ def word_to_tensor(word: str) -> torch.Tensor:
 	for li, letter in enumerate(word):
 		tensor[li][0][letter_index(letter)] = 1
 	return tensor
-
