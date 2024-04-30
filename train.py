@@ -5,7 +5,7 @@ from utils import (
     n_letters,
     word_to_tensor)
 
-from models import RNN
+from models import RNN_name_classifier
 import random
 import time
 import math
@@ -127,7 +127,7 @@ def evaluate(word_tensor: torch.Tensor) -> torch.Tensor:
     """
     hidden = rnn.init_hidden()
 
-    for i in range(word_tensor.size()[0]):
+    for i in range(len(word_tensor[0])):
         output, hidden = rnn(word_tensor[i], hidden)
 
     return output
@@ -150,7 +150,7 @@ def time_since(since):
     return f"{min}m {sec:.0f}s"
 
 
-rnn = RNN(n_letters, n_hidden, n_categories)
+rnn = RNN_name_classifier(n_letters, n_hidden, n_categories)
 
 print_model_summary = config['train_config']['print_model_summary']
 if print_model_summary:

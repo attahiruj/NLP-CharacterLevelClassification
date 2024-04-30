@@ -15,7 +15,7 @@ with open('config.yaml') as config:
 n_hidden = config['train_config']['hyperparameters']['hidden_units']
 
 
-class RNN(nn.Module):
+class RNN_name_classifier(nn.Module):
     """
     A simple RNN model with fully connected layers.
 
@@ -34,7 +34,7 @@ class RNN(nn.Module):
     """
 
     def __init__(self, input_size, hidden_size, output_size):
-        super(RNN, self).__init__()
+        super(RNN_name_classifier, self).__init__()
         self.hidden_size = hidden_size
 
         self.i2h = nn.Linear(input_size, hidden_size)
@@ -73,7 +73,7 @@ class RNN(nn.Module):
 
 
 model = config['train_config']['save_model'][1]
-rnn = RNN(n_letters, n_hidden, n_categories)
+rnn = RNN_name_classifier(n_letters, n_hidden, n_categories)
 rnn.load_state_dict(torch.load(model))
 
 
