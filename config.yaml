@@ -5,7 +5,7 @@ train_config:
     iteration: 100000
   print_model_summary: true
   plot_losses: true
-  plot_confusion_matrix: false
+  plot_confusion_matrix: true
   save_model:
     - true
     - 'models/name_classifier.pt'
