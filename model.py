@@ -1,8 +1,7 @@
 from utils import (
-    all_categories,
     n_categories,
-    n_letters,
-    word_to_tensor)
+    n_letters
+    )
 
 import torch
 import torch.nn as nn
@@ -15,7 +14,7 @@ with open('config.yaml') as config:
 n_hidden = config['train_config']['hyperparameters']['hidden_units']
 
 
-class RNN_name_classifier(nn.Module):
+class RNNWordClassifier(nn.Module):
     """
     A simple RNN model with fully connected layers.
 
@@ -34,7 +33,7 @@ class RNN_name_classifier(nn.Module):
     """
 
     def __init__(self, input_size, hidden_size, output_size):
-        super(RNN_name_classifier, self).__init__()
+        super(RNNWordClassifier, self).__init__()
         self.hidden_size = hidden_size
 
         self.i2h = nn.Linear(input_size, hidden_size)
@@ -73,52 +72,32 @@ class RNN_name_classifier(nn.Module):
 
 
 model = config['train_config']['save_model'][1]
-rnn = RNN_name_classifier(n_letters, n_hidden, n_categories)
-# rnn.load_state_dict(torch.load(model))
+classifier = RNNWordClassifier(n_letters, n_hidden, n_categories)
 
 
-def evaluate(word_tensor: torch.Tensor) -> torch.Tensor:
-    """
-    Evaluate the RNN model on a given input tensor.
+class RNNWordGen(nn.Module):
+    def __init__(self, input_size, hidden_size, output_size):
+        super(RNNWordGen, self).__init__()
+        self.hidden_size = hidden_size
 
-    Args:
-        word_tensor (torch.Tensor): input tensor of
-        shape (batch_size, n_letters)
+        self.i2h = nn.Linear(n_categories + input_size + hidden_size, hidden_size)
+        self.i2o = nn.Linear(n_categories + input_size + hidden_size, output_size)
+        self.o2o = nn.Linear(hidden_size + output_size, output_size)
+        self.dropout = nn.Dropout(0.1)
+        self.softmax = nn.LogSoftmax(dim=1)
 
-    Returns:
-        torch.Tensor: output tensor of shape (batch_size, n_categories)
+    def forward(self, category, input, hidden):
+        input_combined = torch.cat((category, input, hidden), 1)
+        hidden = self.i2h(input_combined)
+        output = self.i2o(input_combined)
+        output_combined = torch.cat((hidden, output), 1)
+        output = self.o2o(output_combined)
+        output = self.dropout(output)
+        output = self.softmax(output)
+        return output, hidden
 
-    """
-    hidden = rnn.init_hidden()
+    def init_hidden(self):
+        return torch.zeros(1, self.hidden_size)
 
-    for i in range(word_tensor.size()[0]):
-        output, hidden = rnn(word_tensor[i], hidden)
+generator = RNNWordGen(n_letters, n_hidden, n_letters)
 
-    return output
-
-
-def predict_class(input_word, n_predictions=1):
-    """
-    Predict the class of an input word.
-
-    Args:
-        input_word (str): The input word.
-        n_predictions (int, optional): The number of predictions to return.
-            Defaults to 1.
-
-    Returns:
-        str: The predicted class.
-
-    """
-    # print('\n> %s' % input_word)
-    with torch.no_grad():
-        output = evaluate(word_to_tensor(input_word))
-        top_pred, top_pred_idx = output.topk(n_predictions, 1, True)
-        predictions = []
-
-        for i in range(n_predictions):
-            pred = top_pred[0][i].item()
-            category_idx = top_pred_idx[0][i].item()
-            # print('(%.2f) %s' % (pred, all_categories[category_idx]))
-            predictions.append([pred, all_categories[category_idx]])
-    return predictions[0][1]

@@ -4,6 +4,9 @@ import glob
 import unicodedata
 import string
 import torch
+import time
+import math
+# from model import RNN_name_classifier, 
 
 files_path = 'data/names/*.txt'
 
@@ -119,3 +122,40 @@ def word_to_tensor(word: str) -> torch.Tensor:
     for li, letter in enumerate(word):
         tensor[li][0][letter_index(letter)] = 1
     return tensor
+
+
+def time_since(since):
+    """
+    Returns a string with the time difference since the input time since value.
+
+    Args:
+        since (float): The time value to calculate the difference from.
+
+    Returns:
+        str: The time difference as a string.
+    """
+    now = time.time()
+    sec = now - since
+    min = math.floor(sec / 60)
+    sec -= min * 60
+    return f"{min}m {sec:.0f}s"
+
+
+def evaluate_classifier(word_tensor: torch.Tensor, model) -> torch.Tensor:
+    """
+    Evaluate the RNN model on a given input tensor.
+
+    Args:
+        word_tensor (torch.Tensor): input tensor of
+        shape (batch_size, n_letters)
+
+    Returns:
+        torch.Tensor: output tensor of shape (batch_size, n_categories)
+
+    """
+    hidden = model.init_hidden()
+    model.eval()
+    for i in range(word_tensor.size()[0]):
+        output, hidden = model(word_tensor[i], hidden)
+
+    return output

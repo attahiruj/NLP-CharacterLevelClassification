@@ -3,17 +3,18 @@ from utils import (
     all_categories,
     n_categories,
     n_letters,
-    word_to_tensor,
-    time_since)
-from model import RNNWordClassifier
+    word_to_tensor)
+
+from model import RNNWordGen
 import random
+import time
+import math
 import torch
 import torch.nn as nn
 from torchinfo import summary
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import yaml
-import time
 
 with open('config.yaml', 'r') as f:
     config = yaml.full_load(f)
@@ -82,8 +83,9 @@ def random_training_example() -> tuple[str, str, torch.Tensor, torch.Tensor]:
 
 
 def train(
-            category: torch.Tensor,
-            word_tensor: torch.Tensor
+            category_tensor: torch.Tensor,
+            input_tensor: torch.Tensor,
+            target_tensor: torch.Tensor
             ) -> tuple[torch.Tensor, float]:
     """
     Trains the RNN on a single training example.
@@ -96,21 +98,24 @@ def train(
         tuple[torch.Tensor, float]: The output tensor and the loss value.
 
     """
+    target_tensor.unsqueeze_(-1)
     hidden = rnn.init_hidden()
 
     rnn.zero_grad()
+    losses = torch.Tensor([0])
 
-    for i in range(word_tensor.size()[0]):
-        output, hidden = rnn(word_tensor[i], hidden)
+    for i in range(input_tensor.size(0)):
+        output, hidden = rnn(category_tensor, input_tensor[i], hidden)
+        loss = criterion(output, target_tensor[i])
+        losses += loss
 
-    loss = criterion(output, category_tensor)
-    loss.backward()
+    losses.backward()
 
     # Add parameters' gradients to their values, multiplied by learning rate
     for p in rnn.parameters():
         p.data.add_(p.grad.data, alpha=-learning_rate)
 
-    return output, loss.item()
+    return output, losses.item() / input_tensor.size(0)
 
 
 def evaluate(word_tensor: torch.Tensor) -> torch.Tensor:
@@ -132,42 +137,50 @@ def evaluate(word_tensor: torch.Tensor) -> torch.Tensor:
     return output
 
 
-rnn = RNNWordClassifier(n_letters, n_hidden, n_categories)
+def time_since(since):
+    """
+    Returns a string with the time difference since the input time since value.
+
+    Args:
+        since (float): The time value to calculate the difference from.
+
+    Returns:
+        str: The time difference as a string.
+    """
+    now = time.time()
+    sec = now - since
+    min = math.floor(sec / 60)
+    sec -= min * 60
+    return f"{min}m {sec:.0f}s"
+
+
+rnn = RNNWordGen(n_letters, n_hidden, n_letters)
 
 print_model_summary = config['train_config']['print_model_summary']
 if print_model_summary:
     print(summary(rnn))
 
+total_loss = 0
+all_losses = []
 start = time.time()
-print('\n{:<12s} | {:<10s} | {:<6s} | {:<15s} | {:<12s} {:<12s}'.format(
-    " Progress", "Time", "Loss", "Name", "Guess", "Correct"
-    ))
-print('-' * 70)
 for iter in range(1, n_iters+1):
-    category, word, category_tensor, word_tensor = random_training_example()
-    output, loss = train(category_tensor, word_tensor)
-    current_loss += loss
+    output, loss = train(*random_training_example())
+    total_loss += loss
 
     # Print ``iter`` number, loss, name and guess
     if iter % print_every == 0:
-        guess, guess_i = category_from_output(output)
-        correct = '✓' if guess == category else '✗ (%s)' % category
-
-        print(
-            '{:<6d} {:<4.0f}% | {:<10s} | {:.4f} | {:<15s} | {:<12s} {:<12s}'
-            .format(iter, iter / n_iters * 100, time_since(start), loss, word,
-                    guess, correct))
+        print('%d\t %d%% (%s) %.4f' % (iter, iter / n_iters * 100, time_since(start), loss))
 
     # Add current loss avg to list of losses
     if iter % plot_every == 0:
-        all_losses.append(current_loss / plot_every)
-        current_loss = 0
+        all_losses.append(total_loss / plot_every)
+        total_loss = 0
 
 print('\n')
 
 save_model = config['train_config']['save_model']
 if save_model[0]:
-    model_path = 'models/name_classifier.pt'
+    model_path = 'models/name_generator.pt'
     torch.save(rnn.state_dict(), save_model[1])
     print('model saved to: {}'.format(model_path))
 
