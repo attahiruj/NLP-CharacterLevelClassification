@@ -2,7 +2,7 @@ train_config:
   hyperparameters:
     hidden_units: 128
     learning_rate: 0.005
-    iteration: 500000
+    iteration: 10000
   print_model_summary: true
   plot_losses: true
   plot_confusion_matrix: true

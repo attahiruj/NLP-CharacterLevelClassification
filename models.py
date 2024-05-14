@@ -74,7 +74,7 @@ class RNN_name_classifier(nn.Module):
 
 model = config['train_config']['save_model'][1]
 rnn = RNN_name_classifier(n_letters, n_hidden, n_categories)
-rnn.load_state_dict(torch.load(model))
+# rnn.load_state_dict(torch.load(model))
 
 
 def evaluate(word_tensor: torch.Tensor) -> torch.Tensor:
