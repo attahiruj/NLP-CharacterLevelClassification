@@ -1,17 +1,10 @@
 from utils import (
     n_categories,
-    n_letters
     )
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import yaml
-
-with open('config.yaml') as config:
-    config = yaml.safe_load(config)
-
-n_hidden = config['train_config']['hyperparameters']['hidden_units']
 
 
 class RNNWordClassifier(nn.Module):
@@ -71,17 +64,15 @@ class RNNWordClassifier(nn.Module):
         return torch.zeros(1, self.hidden_size)
 
 
-model = config['train_config']['save_model'][1]
-classifier = RNNWordClassifier(n_letters, n_hidden, n_categories)
-
-
-class RNNWordGen(nn.Module):
+class RNNWordGenerator(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
-        super(RNNWordGen, self).__init__()
+        super(RNNWordGenerator, self).__init__()
         self.hidden_size = hidden_size
 
-        self.i2h = nn.Linear(n_categories + input_size + hidden_size, hidden_size)
-        self.i2o = nn.Linear(n_categories + input_size + hidden_size, output_size)
+        self.i2h = nn.Linear(n_categories + input_size + hidden_size,
+                             hidden_size)
+        self.i2o = nn.Linear(n_categories + input_size + hidden_size,
+                             output_size)
         self.o2o = nn.Linear(hidden_size + output_size, output_size)
         self.dropout = nn.Dropout(0.1)
         self.softmax = nn.LogSoftmax(dim=1)
@@ -98,6 +89,3 @@ class RNNWordGen(nn.Module):
 
     def init_hidden(self):
         return torch.zeros(1, self.hidden_size)
-
-generator = RNNWordGen(n_letters, n_hidden, n_letters)
-

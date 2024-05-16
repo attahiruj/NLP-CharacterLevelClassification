@@ -166,9 +166,9 @@ for iter in range(1, n_iters+1):
 print('\n')
 
 save_model = config['train_config']['save_model']
-if save_model[0]:
+if save_model:
     model_path = 'models/name_classifier.pt'
-    torch.save(rnn.state_dict(), save_model[1])
+    torch.save(rnn.state_dict(), model_path)
     print('model saved to: {}'.format(model_path))
 
 plot_losses = config['train_config']['plot_losses']
@@ -183,7 +183,10 @@ if plot_confusion_matrix:
 
     # record correct guesses from examples
     for i in range(n_confusion):
-        category, word, category_tensor, word_tensor = random_training_example()
+        (category,
+         word,
+         category_tensor,
+         word_tensor) = random_training_example()
 
         output = evaluate(word_tensor)
         guess, guess_idx = category_from_output(output)
